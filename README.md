@@ -9,8 +9,8 @@ The new string will be assigned to variable, and used to replace the '- seeds: "
 The Ansible Playbook "Installcassandra" will install Cassandra on the VPC
 
 I use the tarball for the installation, because Apt install will automatically start Cassandra. 
-We want the Cassandra to start using the Ec2Snitch and the seeds ips, rpc_address, and listen_address,
-that were assigned with in Terraform and with the python script.
+We want the Cassandra to start using the cassandra.yaml file that has been programmatically modified with
+the Ec2Snitch and the seeds ips, rpc_address, and listen_address, that were assigned with in Terraform and with the python script.
 
 Terraform will output the IP addresses of the EC2 machines.
 
