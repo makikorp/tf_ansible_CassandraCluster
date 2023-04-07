@@ -1,0 +1,174 @@
+---
+- name: Install Cassandra
+  hosts: main
+  remote_user: ubuntu
+  become: true
+  vars:
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=accept-new"
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks: 
+
+    - name: install aptitude 
+      apt:
+        name: aptitude
+        state: latest
+        update_cache: true
+
+    - name: apt-get update
+      ansible.builtin.apt:
+        update_cache: yes  
+
+    - name: install required packages
+      apt:
+        pkg:
+          - openjdk-8-jdk
+          - apt-transport-https
+          - software-properties-common
+          - libfontconfig1
+          - python2.7
+          - python3          
+          - python-pip
+        state: latest
+        update_cache: true
+      
+    - name: download apt key
+      ansible.builtin.apt_key:
+        url: https://downloads.apache.org/cassandra/KEYS
+        state: present
+
+    - name: Add cassandra to sources.list
+      ansible.builtin.apt_repository:
+        repo: deb http://www.apache.org/dist/cassandra/debian 311x main
+        state: present
+
+
+    # - name: Update apt cache and install Cassandra
+    #   ansible.builtin.apt: 
+    #     name: cassandra
+    #     update_cache: yes
+    
+#    - name: install Cassandra-tools
+#      ansible.builtin.apt: 
+#        name: cassandra-tools
+#        update_cache: yes
+
+    - name: override Cassandra.yaml copy to /home/ubuntu/cassandra.yaml
+      ansible.builtin.copy:
+        src: /Users/ericmaki/code/tf_cassandra/cassandra.yaml
+        dest: /home/ubuntu/
+        mode: '0777'
+
+    - name: replace listen_address in cassandra.yaml
+      replace:
+        path: /home/ubuntu/cassandra.yaml
+        regexp: 'listen_address: localhost'
+        replace: 'listen_address: {{ ansible_default_ipv4.address }}'
+
+    - name: replace rpc_address in cassandra.yaml
+      replace:
+        path: /home/ubuntu/cassandra.yaml
+        regexp: 'rpc_address: localhost'
+        replace: 'rpc_address: {{ ansible_default_ipv4.address }}'
+#        replace: 'rpc_address: {{ ansible_ssh_host }}'
+
+    - name: create cassandra directories
+      shell: |
+        mkdir /var/lib/cassandra
+        mkdir /var/lib/cassandra/commitlog
+        mkdir /var/lib/cassandra/data
+        mkdir /var/lib/cassandra/hints
+        mkdir /var/lib/cassandra/saved_caches
+        chmod 777 -R /var/lib/cassandra
+
+    - name: install cassandra with tarball and start
+      ansible.builtin.unarchive:
+        src: http://downloads.apache.org/cassandra/3.11.14/apache-cassandra-3.11.14-bin.tar.gz      
+        dest: /home/ubuntu/
+        remote_src: yes
+      #  tar -xzvf apache-cassandra-3.11.14-bin.tar.gz
+      #  curl -OL http://downloads.apache.org/cassandra/3.11.14/apache-cassandra-3.11.14-bin.tar.gz
+
+    - name: prepare cassandra
+      shell: |
+        mv apache-cassandra-3.11.14 cassandra
+        cd /home/ubuntu/cassandra
+        mv conf/cassandra.yaml conf/Original_cassandra.yaml
+        mv /home/ubuntu/cassandra.yaml /home/ubuntu/cassandra/conf/cassandra.yaml
+        chmod -R 777 /home/ubuntu/cassandra
+
+
+      #  rm apache-cassandra-3.11.*
+
+
+    # - name: replace listen_address in cassandra.yaml
+    #   replace:
+    #     path: /etc/cassandra/cassandra.yaml
+    #     regexp: 'listen_address: localhost'
+    #     replace: 'listen_address: {{ ansible_default_ipv4.address }}'
+
+    # - name: replace rpc_address in cassandra.yaml
+    #   replace:
+    #     path: /etc/cassandra/cassandra.yaml
+    #     regexp: 'rpc_address: localhost'
+    #     replace: 'rpc_address: {{ ansible_default_ipv4.address }}'
+#        replace: 'rpc_address: {{ ansible_ssh_host }}'
+
+    #- name: open ports on ufw
+    #  shell: |
+    #    ufw allow 7000
+    #    ufw allow 7199
+    #    ufw allow 9042
+    #    ufw enable -y
+
+    - name: open ports
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: open ports
+      community.general.ufw:
+        rule: allow
+        port: '9042'
+        proto: tcp
+
+    - name: open port 7000 for cluster communication
+      community.general.ufw:
+        rule: allow
+        port: '7000'
+        proto: tcp
+
+    - name: open port 7199 for JMX
+      community.general.ufw:
+        rule: allow
+        port: '7199'
+        proto: tcp
+
+    - name: enable ufw
+      community.general.ufw:
+        state: enabled
+
+    #- name: Ensure Cassandra is started and enabled
+    #  ansible.builtin.systemd:
+    #    name: cassandra
+    #    enabled: yes
+    #    state: restarted
+
+    - name: start cassandra
+      become: false      
+      shell: |
+        cd /home/ubuntu
+        cassandra/bin/cassandra
+        
+      # ansible.builtin.shell: ./bin/cassandra
+      # #executable: ./bin/cassandra
+      # args:
+      #   chdir: /home/ubuntu/cassandra
+      
+      #become_user: ubuntu
+      #shell: 
+      #  chdir: /home/ubuntu/cassandra
+      #  cmd: ./bin/cassandra
+      #register: result
+
