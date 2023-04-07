@@ -42,17 +42,6 @@
         repo: deb http://www.apache.org/dist/cassandra/debian 311x main
         state: present
 
-
-    # - name: Update apt cache and install Cassandra
-    #   ansible.builtin.apt: 
-    #     name: cassandra
-    #     update_cache: yes
-    
-#    - name: install Cassandra-tools
-#      ansible.builtin.apt: 
-#        name: cassandra-tools
-#        update_cache: yes
-
     - name: override Cassandra.yaml copy to /home/ubuntu/cassandra.yaml
       ansible.builtin.copy:
         src: /Users/ericmaki/code/tf_cassandra/cassandra.yaml
@@ -81,13 +70,12 @@
         mkdir /var/lib/cassandra/saved_caches
         chmod 777 -R /var/lib/cassandra
 
-    - name: install cassandra with tarball and start
+    - name: install cassandra with tarball
       ansible.builtin.unarchive:
         src: http://downloads.apache.org/cassandra/3.11.14/apache-cassandra-3.11.14-bin.tar.gz      
         dest: /home/ubuntu/
         remote_src: yes
-      #  tar -xzvf apache-cassandra-3.11.14-bin.tar.gz
-      #  curl -OL http://downloads.apache.org/cassandra/3.11.14/apache-cassandra-3.11.14-bin.tar.gz
+
 
     - name: prepare cassandra
       shell: |
@@ -96,30 +84,6 @@
         mv conf/cassandra.yaml conf/Original_cassandra.yaml
         mv /home/ubuntu/cassandra.yaml /home/ubuntu/cassandra/conf/cassandra.yaml
         chmod -R 777 /home/ubuntu/cassandra
-
-
-      #  rm apache-cassandra-3.11.*
-
-
-    # - name: replace listen_address in cassandra.yaml
-    #   replace:
-    #     path: /etc/cassandra/cassandra.yaml
-    #     regexp: 'listen_address: localhost'
-    #     replace: 'listen_address: {{ ansible_default_ipv4.address }}'
-
-    # - name: replace rpc_address in cassandra.yaml
-    #   replace:
-    #     path: /etc/cassandra/cassandra.yaml
-    #     regexp: 'rpc_address: localhost'
-    #     replace: 'rpc_address: {{ ansible_default_ipv4.address }}'
-#        replace: 'rpc_address: {{ ansible_ssh_host }}'
-
-    #- name: open ports on ufw
-    #  shell: |
-    #    ufw allow 7000
-    #    ufw allow 7199
-    #    ufw allow 9042
-    #    ufw enable -y
 
     - name: open ports
       community.general.ufw:
@@ -149,12 +113,7 @@
       community.general.ufw:
         state: enabled
 
-    #- name: Ensure Cassandra is started and enabled
-    #  ansible.builtin.systemd:
-    #    name: cassandra
-    #    enabled: yes
-    #    state: restarted
-
+    #NOTE - I am still working on how to start Cassandra using Ansible
     - name: start cassandra
       become: false      
       shell: |
@@ -166,7 +125,6 @@
       # args:
       #   chdir: /home/ubuntu/cassandra
       
-      #become_user: ubuntu
       #shell: 
       #  chdir: /home/ubuntu/cassandra
       #  cmd: ./bin/cassandra
