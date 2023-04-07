@@ -6,7 +6,7 @@ Terraform will set up the VPC, EC2 and other infrastructure for Cassandra to be 
 The seeds_cassandra.py - will stip the trailing line off the string in the seeds file.  
 The new string will be assigned to variable, and used to replace the '- seeds: "127.0.0.1:7000". in the cassandra.yaml
 
-The Ansible Playbook "InstallCassandra" will install Cassandra on the VPC
+The Ansible Playbook "Installcassandra" will install Cassandra on the VPC
 
 I use the tarball for the installation, because Apt install will automatically start Cassandra. 
 We want the Cassandra to start using the Ec2Snitch and the seeds ips, rpc_address, and listen_address,
