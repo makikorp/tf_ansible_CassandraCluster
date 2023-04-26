@@ -1,12 +1,12 @@
 # tf_ansible_CassandraCluster
 Deploy a Cassandra Cluster in AWS using Terraform, Ansible Playbook, and a python script
 
-Terraform will set up the VPC, EC2 and other infrastructure for Cassandra to be deployed
+Terraform will create the AWS infrastructure for Cassandra to be deployed
 
 The seeds_cassandra.py - will stip the trailing line off the string in the seeds file.  
 The new string will be assigned to variable, and used to replace the '- seeds: "127.0.0.1:7000". in the cassandra.yaml
 
-The Ansible Playbook "Installcassandra" will install Cassandra on the VPC
+The Ansible Playbook "Installcassandra" will install Cassandra on AWS
 
 I use the tarball for the installation, because Apt install will automatically start Cassandra. 
 We want the Cassandra to start using the cassandra.yaml file that has been programmatically modified with
